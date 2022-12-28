@@ -1,11 +1,11 @@
 <?php
     session_start();
 
-
     if ( !isset( $_SESSION['add_form_csrf_token'] ) ) {
       // generate csrf token
       $_SESSION['add_form_csrf_token'] = bin2hex( random_bytes(32) );
     }
+   
 
     if ( !isset( $_SESSION['delete_form_csrf_token'] ) ) {
       // generate csrf token
