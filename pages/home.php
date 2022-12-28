@@ -1,5 +1,18 @@
 <?php
     session_start();
+
+
+    if ( !isset( $_SESSION['add_form_csrf_token'] ) ) {
+      // generate csrf token
+      $_SESSION['add_form_csrf_token'] = bin2hex( random_bytes(32) );
+    }
+
+    if ( !isset( $_SESSION['delete_form_csrf_token'] ) ) {
+      // generate csrf token
+      $_SESSION['delete_form_csrf_token'] = bin2hex( random_bytes(32) );
+    }
+
+
    
     $database = new PDO('mysql:host=devkinsta_db;dbname=Simple_Auth','root','33FHSbJDi19BczVZ');
     // var_dump($database);
@@ -12,6 +25,14 @@
         isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST'
     ) {
         if ($_POST['action'] === 'add'){
+              // verify the csrf token is correct or not
+      if ( $_POST['add_form_csrf_token'] !== $_SESSION['add_form_csrf_token'] )
+      {
+        die("Nice try! But I'm smarter than you!");
+      }
+
+      // remove the csrf token from the session data
+      unset( $_SESSION['add_form_csrf_token'] );
             $statement = $database->prepare(
                 "INSERT INTO students (`name` ) VALUES (:name)"     
             );
@@ -22,6 +43,13 @@
         }
 
         if($_POST['action'] === 'delete'){
+          if ( $_POST['delete_form_csrf_token'] !== $_SESSION['delete_form_csrf_token'] )
+          {
+            die("Nice try! But I'm smarter than you!");
+          }
+    
+          // remove the csrf token from the session data
+          unset( $_SESSION['delete_form_csrf_token'] );
            $statement = $database->prepare('DELETE FROM students WHERE id = :id');
            $statement->execute(['id' => $_POST['student_id']]);
            header('Location: /');
@@ -79,6 +107,13 @@
             name="student"
             required
           />
+          <input 
+                type="hidden"
+                name="add_form_csrf_token"
+                value="<?php echo $_SESSION['add_form_csrf_token']; ?>"
+                />
+
+
           <input type="hidden" name="action" value="add" />  
           <button class="btn btn-primary btn-sm rounded ms-2">Add</button>
         </form>
@@ -99,6 +134,11 @@
                   <?php if(isset($_SESSION['user'])): ?>
                    <input type="hidden" name="action" value="delete" />  
                    <button class="btn btn-danger btn-sm">Delete</button>
+                   <input 
+                type="hidden"
+                name="delete_form_csrf_token"
+                value="<?php echo $_SESSION['delete_form_csrf_token']; ?>"
+                />
                   <?php endif; ?>
                   </form>
                 </div>
