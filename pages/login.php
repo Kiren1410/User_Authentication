@@ -1,45 +1,50 @@
 <?php
     session_start();
-
+    
     //connect to db
     $database = new PDO('mysql:host=devkinsta_db;dbname=Simple_Auth', 'root', '33FHSbJDi19BczVZ');
 
     //ensure it's form POST request
     if($_SERVER['REQUEST_METHOD'] === 'POST'){
-    //trigger the sign up process
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    //trigger the login process
+        $email = $_POST['email'];
+        $password = $_POST['password'];
+        //find the user in the database using the provided email
+        $statement = $database->prepare('SELECT * FROM users WHERE email = :email');
+        $statement->execute(['email' => $email]);
+        //fetch one result from the database
+        $user = $statement->fetch();
 
-    //ensure user email doesnt exist in database
-      //find the user in the database using the provided email
-      $statement = $database->prepare('SELECT * FROM users WHERE email = :email');
-      $statement->execute(['email' => $email]);
-      //fetch one result from the database
-      $user = $statement->fetch();
-      //if user exists return error
-      if ($user) {
-        echo 'Email already exists';
-      } else {
+        if($user) {
+            //check password
+            if (password_verify($password, $user['password'])) {
+    
+                $_SESSION['user'] = [
+                    'id' => $user['id'],
+                    'email' => $user['email']
+                ];
 
-    //insert user data into database
-    $statement = $database->prepare(
-        'INSERT INTO users (email, password) VALUES (:email, :password)'
-    );
-
-    $statement->execute([
-        'email' => $email,
-        'password' => password_hash($password, PASSWORD_DEFAULT)
-    ]);
-
-    //redirect the user back to login page
-    header('Location: /login.php');
-    exit;
-
+                //redirect user back to index
+                header('Location: /');
+                exit;
+            
+            } 
+            else {
+                echo 'invalid email or password';
+            }
+        }else {
+            //user doesn't exixts
+            echo 'invalid email or password';
+        }
     }
-}
+
+
+
+
+
 
 ?>
+
 
 
 
@@ -47,7 +52,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Simple Auth - Sign Up</title>
+    <title>Simple Auth - Login</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -68,10 +73,10 @@
     <div class="card rounded shadow-sm mx-auto my-4" style="max-width: 500px;">
       <div class="card-body">
         <h5 class="card-title text-center mb-3 py-3 border-bottom">
-          Sign Up a New Account
+          Login To Your Account
         </h5>
-        <!-- sign up form-->
-        <form action="<?php echo $_SERVER['REQUEST_URI'];?>" method="POST">
+        <!-- login form-->
+        <form action="<?php echo $_SERVER['REQUEST_URI']; ?>" method="POST">
           <div class="mb-3">
             <label for="email" class="form-label">Email address</label>
             <input type="email" class="form-control" id="email" name="email" />
@@ -85,29 +90,15 @@
               name="password"
             />
           </div>
-          <div class="mb-3">
-            <label for="confirm_password" class="form-label"
-              >Confirm Password</label
-            >
-            <input
-              type="password"
-              class="form-control"
-              id="confirm_password"
-              name="confirm_password"
-            />
-          </div>
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary btn-fu">
-              Sign Up
-            </button>
+            <button type="submit" class="btn btn-primary btn-fu">Login</button>
           </div>
         </form>
       </div>
     </div>
-
     <!-- Go back link -->
     <div class="text-center">
-      <a href="index.php" class="text-decoration-none"
+      <a href="/" class="text-decoration-none"
         ><i class="bi bi-arrow-left-circle"></i> Go back</a
       >
     </div>

@@ -9,7 +9,7 @@
     exit;
  } else {
     //redirect back to login page
-    header('Location: /login.php');
+    header('Location: /login');
     exit;
  }
 
